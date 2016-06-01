@@ -37,13 +37,14 @@ setup(name='jarviceclient',
       author_email='stephen.fox@nimbix.net',
       maintainer='Stephen Fox',
       maintainer_email='support@nimbix.net',
-      version='0.9.6',
+      version='0.9.7',
       url='http://www.nimbix.net',
       packages=['jarviceclient'],
       py_modules=['jarviceclient',
                   'jarviceclient.utils',
                   'jarviceclient.JarviceAPI'],
       scripts=['bin/jarvice_cli'],
+      license='LICENSE',
       install_requires=[
           "ecdsa",
           "paramiko",
@@ -62,5 +63,6 @@ setup(name='jarviceclient',
           'Operating System :: POSIX',
           'Programming Language :: Python',
           'Topic :: Software Development :: Libraries :: Python Modules',
-          'Topic :: Utilities'
+          'Topic :: Utilities',
+          'License :: OSI Approved :: BSD License'
       ])
