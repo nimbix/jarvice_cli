@@ -274,6 +274,42 @@ def _call_jarvice_api(parser, command, method, *args, **kwargs):
     return method(**api_kwargs)
 
 
+def cli_wait_for(parser):
+    """Entry point for synchronously waiting on a job.
+
+    Args:
+       args(argparse.Namespace): The basic arguments
+       api_args(argparse.Namespace): Arguments proxied to subcommands
+    """
+    subparser = argparse.ArgumentParser(description='Wait for a job',
+                                        parents=[parser])
+    subparser.add_argument('-number', required=True, type=int,
+                           default=None, help='Job number')
+    subparser.add_argument('-name', type=str, default=None, help='Job name')
+    args = subparser.parse_args()
+
+    if not args.name and not args.number:
+        print "Argument Error: -name or -number is required"
+        subparser.print_help()
+        sys.exit(1)
+    elif args.name and args.number:
+        print "Argument Error: Only one of -name and -number can be input"
+        subparser.print_help()
+        sys.exit(1)
+
+    kwargs = dict({
+        'number': None,
+        'name': None})
+    if args.name:
+        kwargs.update({
+            'name': args.name})
+    if args.number:
+        kwargs.update({
+            'number': args.number})
+
+    utils.wait_for(config['username'], config['apikey'], **kwargs)
+
+
 def cli_jarvice(args, api_args, parser):
     """Entry point for the Jarvice Client CLI.
 
@@ -309,6 +345,8 @@ def cli_jarvice(args, api_args, parser):
             print_output(errors)
         else:
             print_output(result)
+    elif command == 'wait_for':
+        cli_wait_for(parser)
     else:
         print 'Cannot find command %s' % command
 

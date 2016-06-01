@@ -34,7 +34,9 @@ import os
 import logging
 import sys
 import stat
+import time
 from . import exceptions
+from . import JarviceAPI
 
 logging.basicConfig()
 
@@ -397,3 +399,41 @@ def download(username, apikey, remote_path, local_path, overwrite=False):
             _download_file(sftp, remote_path, local_path)
         else:
             _download_dir(sftp, remote_path, local_path)
+
+
+def wait_for(username, apikey, number=None, name=None):
+    """Polls /jarvice/status endpoint until job completes.
+
+    Args:
+      username(str): Jarvice username
+      apikey(str): Jarvice API key available at platform.jarvice.com
+      job_number(str): Jarvice job number
+      job_name(str): Jarvice job name
+    """
+    if not number and not name:
+        raise Exception("number or name is required")
+
+    first_iteration = True
+
+    while True:
+        result, error = JarviceAPI.Client.status(username, apikey,
+                                                 number=number, name=name)
+
+        if error:
+            raise Exception("Could not query job status %s" % error)
+        else:
+            status = result.get(result.keys()[0])['job_status']
+            if status.lower() not in JarviceAPI.Client.COMPLETED_STATUSES:
+                sys.stdout.write('.')
+                sys.stdout.flush()
+                time.sleep(5)
+                first_iteration = False
+                continue
+            else:
+                if not first_iteration:
+                    # Add a linebreak after the .....
+                    sys.stdout.write('\n')
+                job_id = number if number else name
+                sys.stdout.write('Job %s ended with Status: %s\n' %
+                                 (job_id, status))
+                return
