@@ -6,13 +6,22 @@ For more information and the full API documentation, see https://api.jarvice.com
 
 The easiest way to get set up:
 
-Create ~/.jarvice.cfg with the following contents:
+Create `~/.jarvice.cfg` with the following contents:
 
+```
 [auth]
 username: username
 apikey: apikey-from-portal
+```
 
-# the JARVICE CLI
+# The JARVICE CLI
+
+## Installation
+The easiest way to install is directly from PyPI.
+
+```pip install --user jarviceclient```
+
+If the installation was successful, you should have an executable called `jarvice_cli` in your path after installing the `jarviceclient` package.
 
 ## Interacting with Jobs
 
