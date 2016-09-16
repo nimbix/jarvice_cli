@@ -1,0 +1,374 @@
+#!/usr/bin/env python
+#
+# Copyright (c) 2016, Nimbix, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# The views and conclusions contained in the software and documentation are
+# those of the authors and should not be interpreted as representing official
+# policies, either expressed or implied, of Nimbix, Inc.
+#
+# Author: Stephen Fox (stephen.fox@nimbix.net)
+
+import argparse
+import sys
+import pprint
+import os
+import time
+import ConfigParser
+import simplejson as json
+from collections import OrderedDict
+
+from jarviceclient.JarviceAPI import AuthenticatedClient
+from jarviceclient import utils
+from jarviceclient import exceptions
+
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.ERROR)
+stderr_stream = logging.StreamHandler(sys.stderr)
+stderr_stream.setLevel(logging.ERROR)
+logger.addHandler(stderr_stream)
+
+config = {'username': None, 'apikey': None}
+
+
+class JsonOrStringAction(argparse.Action):
+    """An action for argparse which automatically parses or loads JSON
+    """
+    def __init__(self, option_strings, dest, *args, **kwargs):
+        super(JsonOrStringAction, self).__init__(option_strings, dest,
+                                                 *args, **kwargs)
+        if 'nargs' in kwargs:
+            if kwargs['nargs'] != 1:
+                raise ValueError('nargs must be 1')
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        item = None
+        if isinstance(values, list):
+            item = values[0]
+        else:
+            item = values
+        content = ''
+        if os.path.exists(item):
+            with open(item, 'rb') as f:
+                content = f.read()
+        else:
+            content = item
+        try:
+            job_dict = json.loads(content)
+            setattr(namespace, self.dest, job_dict)
+        except Exception as e:
+            logger.critical("Exception parsing json command line input: %s"
+                            % e.message)
+            raise ValueError('Invalid JSON format for argument')
+
+
+def cli_summary(parser, client):
+    subparser = argparse.ArgumentParser(description='List jobs and connections',
+                                        parents=[parser])
+    args = subparser.parse_args()
+
+    result, errors = client.jobs()
+    summary = []
+    summary_errors = []
+    if not errors:
+        for job_number, detail in result.iteritems():
+            item = OrderedDict()
+            item['job_number'] = job_number
+            item['job_name'] = detail['job_name']
+            item['job_label'] = detail['job_label']
+            item['machine_type'] = detail['job_api_submission']['machine']['type']
+            item['nodes'] = detail['job_api_submission']['machine']['nodes']
+            item['application'] = detail['job_application']
+            item['started'] = time.asctime(time.localtime(detail['job_start_time']))
+
+            connect, connect_errors = client.connect(number=job_number)
+            if not connect_errors:
+                item.update(connect)
+            summary.append(item)
+            if errors:
+                summary_errors.append({'job_id': connect_errors})
+    else:
+        summary_errors.append(errors)
+
+    summary_list = {
+        'count': len(summary),
+        'items': summary
+    }
+    return summary_list, summary_errors
+
+def cli_ls(parser):
+
+    subparser = argparse.ArgumentParser(description='List files on drop',
+                                        parents=[parser])
+    subparser.add_argument('-directory', default='.')
+    args = subparser.parse_args()
+    result = utils.ls(config['username'], config['apikey'], args.directory)
+    for i in result:
+        print i
+
+
+def cli_download(parser):
+
+    subparser = argparse.ArgumentParser(description='Download from drop',
+                                        parents=[parser])
+    subparser.add_argument('-l', '--local', required=False,
+                           type=str, help='Local path')
+    subparser.add_argument('-f', '--force', action='store_true',
+                           default=False, dest='overwrite')
+    subparser.add_argument('-d', '--drop_remote', type=str, required=True,
+                           help='Remote path', dest='remote')
+    args = subparser.parse_args()
+
+    local = args.local
+    remote = args.remote
+    overwrite = args.overwrite
+
+    utils.download(config['username'], config['apikey'],
+                   remote, local, overwrite=overwrite)
+
+
+def cli_upload(parser):
+    """Uploads data to username@drop.jarvice.com using sftp via the paramiko
+    python library.
+
+    Args:
+      args(dict): Python dictionary of the "unknown args" which are proxied
+          from the first invocation to this parser.
+
+    Returns:
+      No explicit return value. Will terminate with non-zero exit code on
+      failure.
+    """
+    subparser = argparse.ArgumentParser(description='Download from drop',
+                                        parents=[parser])
+    subparser.add_argument('-l', '--local', required=True,
+                           type=str, help='Local path')
+    subparser.add_argument('-f', '--force', action='store_true',
+                           dest='overwrite', default=False)
+    subparser.add_argument('-d', '--drop_remote', type=str, help='Remote path',
+                           required=False, dest='remote')
+    args = subparser.parse_args()
+
+    local = args.local
+    remote = args.remote
+    overwrite = args.overwrite
+
+    utils.upload(config['username'], config['apikey'],
+                 local, remote, overwrite=overwrite)
+
+
+def get_arguments():
+    """Filters the first set of arguments needed before proxying any unknown
+    arguments to the subcommands.
+    """
+    parser = argparse.ArgumentParser(description="Simple Jarvice CLI",
+                                     add_help=False)
+    auth_group = parser.add_argument_group('auth', description='Configuration')
+    auth_group.add_argument('-username', help='Jarvice username')
+    auth_group.add_argument('-apikey', help='Jarvice API key')
+    auth_group.add_argument('-v', help='loglevel',
+                            choices=['INFO', 'WARN', 'DEBUG', 'CRITICAL'],
+                            dest='loglevel', default='CRITICAL')
+    auth_group.add_argument(
+        'command',
+        choices=['connect', 'submit', 'info', 'status',
+                 'action', 'terminate', 'shutdown', 'jobs',
+                 'output', 'tail', 'apps', 'machines', 'summary',
+                 'download', 'upload', 'wait_for', 'shutdown_all',
+                 'terminate_all', 'ls'])
+
+    known, unknown = parser.parse_known_args()
+    return known, unknown, parser
+
+
+def _set_credentials(args):
+    """Tries to extract username and apikey from args. Otherwise
+    tries to read ~/.jarvice.cfg. Stores in the global config
+    dictionary if successful.
+
+    Args:
+      args(argparse.Namespace): top-level cli arguments
+    """
+    if hasattr(args, 'username') and hasattr(args, 'apikey') \
+       and args.username and args.apikey:
+        config.update({'username': args.username})
+        config.update({'apikey': args.apikey})
+    elif os.path.exists(os.path.expanduser('~/.jarvice.cfg')):
+        CParser = ConfigParser.ConfigParser()
+        CParser.read([os.path.expanduser('~/.jarvice.cfg'), ])
+        config.update({'username': CParser.get('auth', 'username')})
+        config.update({'apikey': CParser.get('auth', 'apikey')})
+    else:
+        sys.write.stderr("username and apikey must be passed as arguments "
+                         "or set in ~/.jarvice.cfg")
+        sys.exit(1)
+
+
+def _call_jarvice_api(parser, command, method, *args, **kwargs):
+    subparser = argparse.ArgumentParser(description='Jarvice API Command',
+                                        parents=[parser])
+
+    if command == 'submit':
+        subparser.add_argument('-job', required=True,
+                               action=JsonOrStringAction,
+                               help='JSON string or job'
+                               )
+    if command in ['info', 'status', 'connect', 'tail', 'terminate',
+                   'shutdown', 'output', 'action', 'apps', 'machines'
+                   'wait_for']:
+        subparser.add_argument('-name', help='Name')
+
+    if command in ['info', 'status', 'connect', 'tail', 'terminate',
+                   'shutdown', 'output', 'action', 'wait_for']:
+        subparser.add_argument('-number', help='Job number')
+
+    if command == 'action':
+        subparser.add_argument('-action', required=True,
+                               help='Action to apply to job')
+
+    if command in ['output', 'tail']:
+        subparser.add_argument('-lines', help='Lines to show (0 for all)',
+                               default=0)
+
+    args = subparser.parse_args()
+    if args.command not in ['jobs', 'submit', 'shutdown_all', 'terminate_all',
+                            'apps', 'machines']:
+        if not args.name and not args.number:
+            print "Argument Error: -name or -number is required"
+            subparser.print_help()
+            sys.exit(1)
+        elif args.name and args.number:
+            print "Argument Error: Only one of -name and -number can be input"
+            subparser.print_help()
+            sys.exit(1)
+
+    args_dict = vars(args)
+    proxy_args = ['name', 'number', 'lines', 'action', 'job']
+    api_kwargs = dict()
+    for key, value in args_dict.iteritems():
+        if key in proxy_args and value is not None:
+            api_kwargs.update({key: value})
+    return method(**api_kwargs)
+
+
+def cli_wait_for(parser):
+    """Entry point for synchronously waiting on a job.
+
+    Args:
+       args(argparse.Namespace): The basic arguments
+       api_args(argparse.Namespace): Arguments proxied to subcommands
+    """
+    subparser = argparse.ArgumentParser(description='Wait for a job',
+                                        parents=[parser])
+    subparser.add_argument('-number', required=True, type=int,
+                           default=None, help='Job number')
+    subparser.add_argument('-name', type=str, default=None, help='Job name')
+    args = subparser.parse_args()
+
+    if not args.name and not args.number:
+        print "Argument Error: -name or -number is required"
+        subparser.print_help()
+        sys.exit(1)
+    elif args.name and args.number:
+        print "Argument Error: Only one of -name and -number can be input"
+        subparser.print_help()
+        sys.exit(1)
+
+    kwargs = dict({
+        'number': None,
+        'name': None})
+    if args.name:
+        kwargs.update({
+            'name': args.name})
+    if args.number:
+        kwargs.update({
+            'number': args.number})
+
+    utils.wait_for(config['username'], config['apikey'], **kwargs)
+
+
+def cli_jarvice(args, api_args, parser):
+    """Entry point for the Jarvice Client CLI.
+
+    Args:
+      args(argparse.Namespace): The basic arguments
+      api_args(argparse.Namespace): Arguments proxied to subcommands
+    """
+    _set_credentials(args)
+    client = AuthenticatedClient(config['username'], config['apikey'])
+    command = args.command
+    if hasattr(client, command):
+        method = getattr(client, command)
+        result, errors = _call_jarvice_api(parser, command, method)
+        if errors:
+            print_output(errors)
+        if command in ['tail', 'output']:
+            print result
+        else:
+            print_output(result)
+    elif command == 'download':
+        cli_download(parser)
+    elif command == 'upload':
+        try:
+            cli_upload(parser)
+        except exceptions.UploadException as e:
+            logging.error(e.message)
+            sys.exit(1)
+    elif command == 'ls':
+        cli_ls(parser)
+    elif command == 'summary':
+        result, errors = cli_summary(parser, client)
+        if errors:
+            print_output(errors)
+        else:
+            print_output(result)
+    elif command == 'wait_for':
+        cli_wait_for(parser)
+    else:
+        print 'Cannot find command %s' % command
+
+
+def print_output(result):
+    if isinstance(result, dict) or isinstance(result, list):
+        print json.dumps(result, indent=4)
+    else:
+        pprint.pprint(result, indent=4)
+
+
+def main():
+    known, unknown, parser = get_arguments()
+    logger.setLevel(getattr(logging, known.loglevel))
+    try:
+        cli_jarvice(known, unknown, parser)
+    except Exception as e:
+        logger.critical("%s" % " ".join(sys.argv[:]))
+        logger.critical("An unknown error as occurred %s. Please report this "
+                        "to support@nimbix.net if it persists." % e.message,
+                        exc_info=True)
+        sys.exit(1)
+
+if __name__ == '__main__':
+    main()

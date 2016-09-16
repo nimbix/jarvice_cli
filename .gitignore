@@ -1,0 +1,6 @@
+api.log
+*.pyc
+MANIFEST
+dist/
+.venv/
+
