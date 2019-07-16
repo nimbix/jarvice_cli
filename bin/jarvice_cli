@@ -222,7 +222,7 @@ def _set_credentials(args):
         config.update({'username': CParser.get('auth', 'username')})
         config.update({'apikey': CParser.get('auth', 'apikey')})
     else:
-        sys.write.stderr("username and apikey must be passed as arguments "
+        sys.sterr.write.("username and apikey must be passed as arguments "
                          "or set in ~/.jarvice.cfg")
         sys.exit(1)
 
