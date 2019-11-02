@@ -1,4 +1,4 @@
-ecdsa==0.13
+ecdsa==0.13.3
 paramiko==1.16.0
 pycrypto==2.6.1
 requests==2.9.1
