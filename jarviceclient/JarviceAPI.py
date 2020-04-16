@@ -30,6 +30,7 @@
 #
 # Author: Stephen Fox (stephen.fox@nimbix.net)
 
+from __future__ import print_function
 import requests
 import json
 import logging
@@ -362,5 +363,5 @@ class AuthenticatedClient(object):
 
 
 if __name__ == '__main__':
-    print "Jarvice API Python Client for running on-demand HPC work flows."
-    print "This client calls https://api.jarvice.com"
+    print("Jarvice API Python Client for running on-demand HPC work flows.")
+    print("This client calls https://api.jarvice.com")
