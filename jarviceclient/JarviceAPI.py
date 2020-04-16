@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2016, Nimbix, Inc.
+# Copyright (c) 2020, Nimbix, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,6 @@
 # The views and conclusions contained in the software and documentation are
 # those of the authors and should not be interpreted as representing official
 # policies, either expressed or implied, of Nimbix, Inc.
-#
-# Author: Stephen Fox (stephen.fox@nimbix.net)
 
 import requests
 import json
@@ -38,7 +36,7 @@ import logging
 class Client(object):
     """Static class for making API calls to JARVICE.  Credentials are
     inserted to the payload by passing as parameters to the
-    classmethods.
+    class methods.
     """
     BASE_URL = 'https://api.jarvice.com'
 
@@ -252,9 +250,9 @@ class Client(object):
         errors = None
 
         if method == 'GET':
-            result = requests.get(cls.BASE_URL+endpoint, params=params)
+            result = requests.get(cls.BASE_URL + endpoint, params=params)
         elif method == 'POST':
-            result = requests.post(cls.BASE_URL+endpoint, json=params)
+            result = requests.post(cls.BASE_URL + endpoint, json=params)
         else:
             raise Exception("Method %(method)s is not implemented" %
                             {'method': method})
@@ -276,7 +274,7 @@ class Client(object):
                 if 'error' not in errors:
                     errors.update({'error': {}})
                 errors['error'].update({'message': "Unknown content type (%s)"
-                                        % content_type})
+                                                   % content_type})
                 logging.error("Unknown content type (%s)" % content_type)
         return (api_result, errors)
 
@@ -286,6 +284,7 @@ class AuthenticatedClient(object):
     to the Jarvice API. Even though it is a client, it is sessionless
     since it is calling HTTP endpoints of https://api.jarvice.com
     """
+
     def __init__(self, username, apikey):
         self.username = username
         self.apikey = apikey
@@ -362,5 +361,5 @@ class AuthenticatedClient(object):
 
 
 if __name__ == '__main__':
-    print "Jarvice API Python Client for running on-demand HPC work flows."
+    print "Jarvice API Python Client for running on-demand HPC work flows"
     print "This client calls https://api.jarvice.com"
