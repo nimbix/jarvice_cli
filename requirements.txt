@@ -1,5 +1,5 @@
 ecdsa==0.13.3
-paramiko==1.16.0
+paramiko==2.0.9
 pycrypto==2.6.1
 requests==2.9.1
 simplejson==3.8.2
