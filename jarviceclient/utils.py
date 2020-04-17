@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2016, Nimbix, Inc.
+# Copyright (c) 2020, Nimbix, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,6 @@
 # The views and conclusions contained in the software and documentation are
 # those of the authors and should not be interpreted as representing official
 # policies, either expressed or implied, of Nimbix, Inc.
-#
-# Author: Stephen Fox (stephen.fox@nimbix.net)
 
 import os
 import logging
@@ -43,7 +41,7 @@ logging.basicConfig()
 try:
     import paramiko
 except ImportError:
-    sys.write.stderr("Please install paramiko. Upload and download will not "
+    sys.stderr.write("Please install paramiko. Upload and download will not "
                      "function without this dependency.")
 
 
@@ -52,7 +50,7 @@ def _format_status(filename, current, total):
     """
     progress = 0
     if total > 0:
-        progress = float(current)/float(total)*100
+        progress = float(current) / float(total) * 100
         sys.stdout.write("\r%(filename)s %(percent)d %% "
                          "(%(current)s B of %(total)s B)" % {
                              'filename': filename,
@@ -195,11 +193,12 @@ def _put_dir(sftp, local_path, remote_path, overwrite=False):
                 try:
                     _upload_file(sftp, full_path, destination)
                 except paramiko.sftp.SFTPError as e:
-                    message = "Skipping %(local)s. Failure uploading %(local)s"
-                    " to %(remote)s with error %(message)s." %\
-                        {'local': full_path,
-                         'remote': destination,
-                         'message': e.message}
+                    message = "Skipping %(local)s. " \
+                              "Failure uploading %(local)s to %(remote)s " \
+                              "with error %(message)s." % \
+                              {'local': full_path,
+                               'remote': destination,
+                               'message': e.message}
                     logging.warning(message)
                     continue
                 except Exception as e:
@@ -220,8 +219,8 @@ def _put_dir(sftp, local_path, remote_path, overwrite=False):
         raise
 
 
-def _get_dir(sftp, remote_path, local_path, overwrite=False):
-    """Recusrively walk remote_path and transfer to local_path mirroring
+def _get_dir(sftp, remote_path, local_path):
+    """Recursively walk remote_path and transfer to local_path mirroring
     the directory structure.
 
     Args:
@@ -229,20 +228,18 @@ def _get_dir(sftp, remote_path, local_path, overwrite=False):
       remote_path(str): Root of remote path to recursively copy.
       local_path(str): Root of local destination. Defaults to current directory
          retrieved by os.getcwd()
-      overwrite(bool): Overwrite file if exists in local path. Default False.
-         writes path to stderr if error occurs.
     """
     try:
         sftp.normalize(remote_path)
     except IOError:
-        logging.critical("Remote directory %s does not exist" % (remote_path))
+        logging.critical("Remote directory %s does not exist" % remote_path)
         raise
 
     if not os.path.exists(local_path):
         os.makedirs(local_path)
 
     for item in sftp.listdir_attr(remote_path):
-        # If directory, copy it to current local directory recusrively
+        # If directory, copy it to current local directory recursively
         if stat.S_ISDIR(item.st_mode) and not stat.S_ISLNK(item.st_mode):
             next_remote_directory = os.path.join(remote_path, item.filename)
             next_local_directory = os.path.join(local_path, item.filename)
@@ -250,7 +247,8 @@ def _get_dir(sftp, remote_path, local_path, overwrite=False):
                                                local_path))
             _get_dir(sftp, remote_path=next_remote_directory,
                      local_path=next_local_directory)
-        # If a file, cocpy the file to current local directory
+
+        # If a file, copy the file to current local directory
         elif stat.S_ISREG(item.st_mode) or stat.S_ISLNK(item.st_mode):
             remote_file_path = os.path.join(remote_path, item.filename)
             local_file_path = os.path.join(local_path, item.filename)
@@ -263,7 +261,7 @@ def _get_dir(sftp, remote_path, local_path, overwrite=False):
                                     'local': local_file_path})
                 raise exceptions.DownloadException(message)
         else:
-            message = "Unknown error downloading directory %s to %s" %\
+            message = "Unknown error downloading directory %s to %s" % \
                       (remote_path, local_path)
             logging.critical(message)
             raise exceptions.DownloadException(message)
@@ -317,13 +315,14 @@ def upload(username, apikey, local_path, remote_path=None, overwrite=False):
       apikey(str): Jarvice API key available at platform.jarvice.com
       local_path(str): relative or absolute path to local file or directory
       remote_path(str): file destination or directory
-      recursive(bool): Like -r in cp; recursively uploads entire directory
+      overwrite:
     Raises:
       jarviceclient.exceptions.UploadException if:
          - local path does not exist
          - remote path exists but overwrite is false
          - remote path exists but is an unrecognized type (not a regular file
            or directory)
+
     """
     sftp = _get_sftp_client(username, apikey)
 
@@ -382,7 +381,7 @@ def upload(username, apikey, local_path, remote_path=None, overwrite=False):
         sftp.put(local_path, destination_path)
 
 
-def download(username, apikey, remote_path, local_path, overwrite=False):
+def download(username, apikey, remote_path, local_path):
     """Download files from username@drop.jarvice.com
 
     Args:
@@ -390,7 +389,6 @@ def download(username, apikey, remote_path, local_path, overwrite=False):
       apikey(str): Jarvice API key available at platform.jarvice.com
       local_path(str): relative or absolute path to local file or directory
       remote_path(str): file destination or directory
-      recursive(bool): Like -r in cp; recursively uploads entire directory
     """
     sftp = _get_sftp_client(username, apikey)
 
@@ -402,13 +400,13 @@ def download(username, apikey, remote_path, local_path, overwrite=False):
 
 
 def wait_for(username, apikey, number=None, name=None):
-    """Polls /jarvice/status endpoint until job completes.
+    """Polls /jarvice/status endpoint until job completes
 
     Args:
       username(str): Jarvice username
       apikey(str): Jarvice API key available at platform.jarvice.com
-      job_number(str): Jarvice job number
-      job_name(str): Jarvice job name
+      number(str): Jarvice job number
+      name(str): Jarvice job name
     """
     if not number and not name:
         raise Exception("number or name is required")

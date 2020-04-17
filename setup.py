@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, Nimbix, Inc.
+# Copyright (c) 2020, Nimbix, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,25 +26,27 @@
 # The views and conclusions contained in the software and documentation are
 # those of the authors and should not be interpreted as representing official
 # policies, either expressed or implied, of Nimbix, Inc.
-#
-# Author: Stephen Fox (stephen.fox@nimbix.net)
 
-from distutils.core import setup
+# from distutils.core import setup
+from setuptools import setup, find_packages
+
+with open("README.md", "r") as fh:
+    long_description = fh.read()
 
 setup(name='jarviceclient',
       description='Jarvice API Python Client for Nimbix, Inc.',
-      author='Stephen Fox',
-      author_email='stephen.fox@nimbix.net',
-      maintainer='Stephen Fox',
+      long_description=long_description,
+      long_description_content_type="text/markdown",
+      maintainer='Nimbix',
       maintainer_email='support@nimbix.net',
-      version='0.9.7',
+      version='1.0.0',
       url='http://www.nimbix.net',
-      packages=['jarviceclient'],
+      packages=find_packages(),
       py_modules=['jarviceclient',
                   'jarviceclient.utils',
                   'jarviceclient.JarviceAPI'],
       scripts=['bin/jarvice_cli'],
-      license='LICENSE',
+      license='LICENSE.md',
       install_requires=[
           "ecdsa",
           "paramiko",
@@ -52,16 +54,17 @@ setup(name='jarviceclient',
           "requests",
           "simplejson"],
       classifiers=[
-          'Development Status :: 3 - Alpha',
+          'Development Status :: 5 - Production/Stable',
           'Environment :: Console',
-          'Environment :: Web Environment',
           'Intended Audience :: End Users/Desktop',
           'Intended Audience :: Developers',
           'Intended Audience :: System Administrators',
+          'Intended Audience :: Science/Research',
           'Operating System :: MacOS :: MacOS X',
           'Operating System :: Microsoft :: Windows',
           'Operating System :: POSIX',
           'Programming Language :: Python',
+          'Topic :: System :: Distributed Computing',
           'Topic :: Software Development :: Libraries :: Python Modules',
           'Topic :: Utilities',
           'License :: OSI Approved :: BSD License'

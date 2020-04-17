@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-#
-# Copyright (c) 2016, Nimbix, Inc.
+
+# Copyright (c) 2020, Nimbix, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,6 @@
 # The views and conclusions contained in the software and documentation are
 # those of the authors and should not be interpreted as representing official
 # policies, either expressed or implied, of Nimbix, Inc.
-#
-# Author: Stephen Fox (stephen.fox@nimbix.net)
 
 import argparse
 import sys
@@ -51,12 +49,13 @@ stderr_stream = logging.StreamHandler(sys.stderr)
 stderr_stream.setLevel(logging.ERROR)
 logger.addHandler(stderr_stream)
 
-config = {'username': None, 'apikey': None}
+config = dict(username='', apikey='')
 
 
 class JsonOrStringAction(argparse.Action):
     """An action for argparse which automatically parses or loads JSON
     """
+
     def __init__(self, option_strings, dest, *args, **kwargs):
         super(JsonOrStringAction, self).__init__(option_strings, dest,
                                                  *args, **kwargs)
@@ -86,8 +85,9 @@ class JsonOrStringAction(argparse.Action):
 
 
 def cli_summary(parser, client):
-    subparser = argparse.ArgumentParser(description='List jobs and connections',
-                                        parents=[parser])
+    subparser = argparse.ArgumentParser(
+        description='List jobs and connections',
+        parents=[parser])
     args = subparser.parse_args()
 
     result, errors = client.jobs()
@@ -99,10 +99,12 @@ def cli_summary(parser, client):
             item['job_number'] = job_number
             item['job_name'] = detail['job_name']
             item['job_label'] = detail['job_label']
-            item['machine_type'] = detail['job_api_submission']['machine']['type']
+            item['machine_type'] = detail['job_api_submission']['machine'][
+                'type']
             item['nodes'] = detail['job_api_submission']['machine']['nodes']
             item['application'] = detail['job_application']
-            item['started'] = time.asctime(time.localtime(detail['job_start_time']))
+            item['started'] = time.asctime(
+                time.localtime(detail['job_start_time']))
 
             connect, connect_errors = client.connect(number=job_number)
             if not connect_errors:
@@ -119,8 +121,8 @@ def cli_summary(parser, client):
     }
     return summary_list, summary_errors
 
-def cli_ls(parser):
 
+def cli_ls(parser):
     subparser = argparse.ArgumentParser(description='List files on drop',
                                         parents=[parser])
     subparser.add_argument('-directory', default='.')
@@ -131,7 +133,6 @@ def cli_ls(parser):
 
 
 def cli_download(parser):
-
     subparser = argparse.ArgumentParser(description='Download from drop',
                                         parents=[parser])
     subparser.add_argument('-l', '--local', required=False,
@@ -161,6 +162,7 @@ def cli_upload(parser):
     Returns:
       No explicit return value. Will terminate with non-zero exit code on
       failure.
+
     """
     subparser = argparse.ArgumentParser(description='Download from drop',
                                         parents=[parser])
@@ -213,7 +215,7 @@ def _set_credentials(args):
       args(argparse.Namespace): top-level cli arguments
     """
     if hasattr(args, 'username') and hasattr(args, 'apikey') \
-       and args.username and args.apikey:
+            and args.username and args.apikey:
         config.update({'username': args.username})
         config.update({'apikey': args.apikey})
     elif os.path.exists(os.path.expanduser('~/.jarvice.cfg')):
@@ -222,8 +224,8 @@ def _set_credentials(args):
         config.update({'username': CParser.get('auth', 'username')})
         config.update({'apikey': CParser.get('auth', 'apikey')})
     else:
-        sys.stderr.write("username and apikey must be passed as arguments "
-                        "or set in ~/.jarvice.cfg")
+        sys.stderr.write("username and apikey must be passed as arguments 
+                         "or set in ~/.jarvice.cfg")
         sys.exit(1)
 
 
@@ -238,7 +240,7 @@ def _call_jarvice_api(parser, command, method, *args, **kwargs):
                                )
     if command in ['info', 'status', 'connect', 'tail', 'terminate',
                    'shutdown', 'output', 'action', 'apps', 'machines'
-                   'wait_for']:
+                                                           'wait_for']:
         subparser.add_argument('-name', help='Name')
 
     if command in ['info', 'status', 'connect', 'tail', 'terminate',
@@ -280,6 +282,7 @@ def cli_wait_for(parser):
     Args:
        args(argparse.Namespace): The basic arguments
        api_args(argparse.Namespace): Arguments proxied to subcommands
+       :param parser:
     """
     subparser = argparse.ArgumentParser(description='Wait for a job',
                                         parents=[parser])
@@ -311,11 +314,13 @@ def cli_wait_for(parser):
 
 
 def cli_jarvice(args, api_args, parser):
-    """Entry point for the Jarvice Client CLI.
+    """Entry point for the Jarvice Client CLI
 
     Args:
-      args(argparse.Namespace): The basic arguments
-      api_args(argparse.Namespace): Arguments proxied to subcommands
+
+      :param args: The basic arguments
+      :param api_args: Arguments proxied to subcommands
+      :param parser:
     """
     _set_credentials(args)
     client = AuthenticatedClient(config['username'], config['apikey'])
@@ -369,6 +374,7 @@ def main():
                         "to support@nimbix.net if it persists." % e.message,
                         exc_info=True)
         sys.exit(1)
+
 
 if __name__ == '__main__':
     main()
