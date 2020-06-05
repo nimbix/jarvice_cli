@@ -123,63 +123,106 @@ def cli_summary(parser, client):
 
 
 def cli_ls(parser):
-    subparser = argparse.ArgumentParser(description='List files on drop',
-                                        parents=[parser])
-    subparser.add_argument('-directory', default='.')
+    """Lists directory from given vault using SFTP
+
+    :param parser:
+    :return: prints single line output per entry from vault
+    """
+    subparser = argparse.ArgumentParser(
+        description='List files on a vault (default is drop.jarvice.com)',
+        parents=[parser])
+
+    subparser.add_argument('-store',
+                           default='drop.jarvice.com',
+                           help='Remote vault name')
+    subparser.add_argument('-directory',
+                           default='.',
+                           help='Remote directory name')
+
     args = subparser.parse_args()
-    result = utils.ls(config['username'], config['apikey'], args.directory)
+    result = utils.ls(config['username'], config['apikey'],
+                      args.store, args.directory)
     for i in result:
         print i
 
 
 def cli_download(parser):
-    subparser = argparse.ArgumentParser(description='Download from drop',
+    """Downloads file or whole directories from the specified vault,
+    defaulting to drop.jarvice.com
+
+    :param parser: parent arg parser
+    :return: nothing
+    """
+    subparser = argparse.ArgumentParser(description='Download from vault',
                                         parents=[parser])
-    subparser.add_argument('-l', '--local', required=False,
-                           type=str, help='Local path')
-    subparser.add_argument('-f', '--force', action='store_true',
-                           default=False, dest='overwrite')
-    subparser.add_argument('-d', '--drop_remote', type=str, required=True,
-                           help='Remote path', dest='remote')
+
+    subparser.add_argument('-l', '--local',
+                           required=False,
+                           type=str,
+                           help='Local path')
+    subparser.add_argument('-f', '--force',
+                           action='store_true',
+                           default=False,
+                           dest='overwrite')
+    subparser.add_argument('-s', '--storage',
+                           type=str,
+                           required=False,
+                           default='drop.jarvice.com',
+                           dest='storage',
+                           help='Vault address')
+    subparser.add_argument('-d', '--drop_remote',
+                           type=str,
+                           required=True,
+                           dest='remote',
+                           help='Remote path')
+
     args = subparser.parse_args()
 
-    local = args.local
-    remote = args.remote
-    overwrite = args.overwrite
-
     utils.download(config['username'], config['apikey'],
-                   remote, local, overwrite=overwrite)
+                   args.storage, args.remote, args.local)
 
 
 def cli_upload(parser):
-    """Uploads data to username@drop.jarvice.com using sftp via the paramiko
-    python library.
+    """Uploads data to username@drop.jarvice.com (or alternate vault)
+    using sftp via the Paramiko python library
 
-    Args:
-      args(dict): Python dictionary of the "unknown args" which are proxied
-          from the first invocation to this parser.
+    :param parser: arg parser parent
 
-    Returns:
+    :return:
       No explicit return value. Will terminate with non-zero exit code on
       failure.
-
     """
-    subparser = argparse.ArgumentParser(description='Download from drop',
+    subparser = argparse.ArgumentParser(description='Upload to vault',
                                         parents=[parser])
-    subparser.add_argument('-l', '--local', required=True,
-                           type=str, help='Local path')
-    subparser.add_argument('-f', '--force', action='store_true',
-                           dest='overwrite', default=False)
-    subparser.add_argument('-d', '--drop_remote', type=str, help='Remote path',
-                           required=False, dest='remote')
+
+    subparser.add_argument('-l', '--local',
+                           required=True,
+                           type=str,
+                           help='Local path')
+    subparser.add_argument('-f', '--force',
+                           action='store_true',
+                           dest='overwrite',
+                           default=False)
+    subparser.add_argument('-s', '--storage',
+                           type=str,
+                           required=False,
+                           default='drop.jarvice.com',
+                           dest='storage',
+                           help='Vault address')
+    subparser.add_argument('-d', '--drop_remote',
+                           type=str,
+                           required=False,
+                           dest='remote',
+                           help='Remote path')
     args = subparser.parse_args()
 
     local = args.local
+    store = args.storage
     remote = args.remote
     overwrite = args.overwrite
 
     utils.upload(config['username'], config['apikey'],
-                 local, remote, overwrite=overwrite)
+                 local, store, remote, overwrite=overwrite)
 
 
 def get_arguments():
@@ -224,7 +267,7 @@ def _set_credentials(args):
         config.update({'username': CParser.get('auth', 'username')})
         config.update({'apikey': CParser.get('auth', 'apikey')})
     else:
-        sys.stderr.write("username and apikey must be passed as arguments" 
+        sys.stderr.write("username and apikey must be passed as arguments " 
                          "or set in ~/.jarvice.cfg")
         sys.exit(1)
 
@@ -324,6 +367,7 @@ def cli_jarvice(args, api_args, parser):
     """
     _set_credentials(args)
     client = AuthenticatedClient(config['username'], config['apikey'])
+
     command = args.command
     if hasattr(client, command):
         method = getattr(client, command)
@@ -366,12 +410,13 @@ def print_output(result):
 def main():
     known, unknown, parser = get_arguments()
     logger.setLevel(getattr(logging, known.loglevel))
+
     try:
         cli_jarvice(known, unknown, parser)
     except Exception as e:
         logger.critical("%s" % " ".join(sys.argv[:]))
         logger.critical("An unknown error as occurred %s. Please report this "
-                        "to support@nimbix.net if it persists." % e.message,
+                        "to support@nimbix.net if it persists" % e.message,
                         exc_info=True)
         sys.exit(1)
 

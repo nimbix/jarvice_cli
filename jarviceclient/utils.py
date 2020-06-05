@@ -61,7 +61,6 @@ def _format_status(filename, current, total):
 
 
 def _remote_path_exists(sftp, remote_path):
-    exists = False
     try:
         sftp.normalize(remote_path)
         exists = True
@@ -282,38 +281,42 @@ def _upload_dir(sftp, local_path, remote_path=None):
     _put_dir(sftp, local_path, remote_path)
 
 
-def _get_sftp_client(username, apikey):
-    """Construct a paramiko SFTP client connected to drop.jarvice.com
-    using the user's Nimbix credentials.
+def _get_sftp_client(username, apikey, vault):
+    """Construct a paramiko SFTP client connected to (default)drop.jarvice.com
+    or provided vault using the user's Nimbix credentials
 
     Args:
       username(str): Nimbix username for platform.jarvice.com
       apikey(str): Nimbix apikey for platform.jarvice.com
     """
-    transport = paramiko.Transport(('drop.jarvice.com', 22))
+    transport = paramiko.Transport(vault, 22)
     transport.connect(username=username, password=apikey)
     sftp = paramiko.SFTPClient.from_transport(transport)
+
     return sftp
 
 
-def ls(username, apikey, remote_path):
-    sftp = _get_sftp_client(username, apikey)
+def ls(username, apikey, vault, remote_path):
+    sftp = _get_sftp_client(username, apikey, vault)
     try:
         result = sftp.listdir(remote_path)
     except Exception:
         logging.error("%(remote_path)s does not exist" %
                       {'remote_path': remote_path})
         raise
+
     return result
 
 
-def upload(username, apikey, local_path, remote_path=None, overwrite=False):
+def upload(username, apikey, local_path, vault, remote_path=None,
+           overwrite=False):
     """Upload files to username@drop.jarvice.com
 
     Args:
       username(str): Jarvice username
       apikey(str): Jarvice API key available at platform.jarvice.com
       local_path(str): relative or absolute path to local file or directory
+      vault(str): JARVICE vault
       remote_path(str): file destination or directory
       overwrite:
     Raises:
@@ -324,7 +327,7 @@ def upload(username, apikey, local_path, remote_path=None, overwrite=False):
            or directory)
 
     """
-    sftp = _get_sftp_client(username, apikey)
+    sftp = _get_sftp_client(username, apikey, vault)
 
     if os.path.exists(local_path):
         is_dir = os.path.isdir(local_path)
@@ -361,7 +364,7 @@ def upload(username, apikey, local_path, remote_path=None, overwrite=False):
                 elif _remote_path_isfile(sftp, remote_path):
                     if not overwrite:
                         # Do not overwrite if it is a file
-                        message = "Remote path exists."
+                        message = "Remote path exists"
                         logging.error(message)
                         raise exceptions.UploadException(message)
                     else:
@@ -381,16 +384,17 @@ def upload(username, apikey, local_path, remote_path=None, overwrite=False):
         sftp.put(local_path, destination_path)
 
 
-def download(username, apikey, remote_path, local_path):
-    """Download files from username@drop.jarvice.com
+def download(username, apikey, vault, remote_path, local_path):
+    """Download files from username@<vault> (default: drop.jarvice.com)
 
     Args:
       username(str): Jarvice username
       apikey(str): Jarvice API key available at platform.jarvice.com
+      vault(str): JARVICE vault
       local_path(str): relative or absolute path to local file or directory
       remote_path(str): file destination or directory
     """
-    sftp = _get_sftp_client(username, apikey)
+    sftp = _get_sftp_client(username, apikey, vault)
 
     if _remote_path_exists(sftp, remote_path):
         if _remote_path_isfile(sftp, remote_path):
