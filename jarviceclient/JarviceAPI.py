@@ -38,13 +38,13 @@ class Client(object):
     inserted to the payload by passing as parameters to the
     class methods.
     """
-    BASE_URL = 'https://api.jarvice.com'
+    # BASE_URL = 'https://api.jarvice.com'
 
     COMPLETED_STATUSES = ['completed', 'completed with error', 'terminated',
                           'canceled']
 
     @classmethod
-    def shutdown(cls, username, apikey, number=None, name=None):
+    def shutdown(cls, username, apikey, api_url, number=None, name=None):
         method = 'GET'
         endpoint = '/jarvice/shutdown'
         params = {}
@@ -60,10 +60,10 @@ class Client(object):
             params.update({'name': name})
         else:
             params.update({'number': number})
-        return cls._call_api(method, endpoint, params)
+        return cls._call_api(api_url, method, endpoint, params)
 
     @classmethod
-    def machines(cls, username, apikey, name=None):
+    def machines(cls, username, apikey, api_url, name=None):
         method = 'GET'
         endpoint = '/jarvice/machines'
         params = {}
@@ -74,10 +74,10 @@ class Client(object):
         }
         if name:
             params.update({'name': name})
-        return cls._call_api(method, endpoint, params)
+        return cls._call_api(api_url, method, endpoint, params)
 
     @classmethod
-    def apps(cls, username, apikey, name=None):
+    def apps(cls, username, apikey, api_url, name=None):
         method = 'GET'
         endpoint = '/jarvice/apps'
         params = {}
@@ -88,10 +88,10 @@ class Client(object):
         }
         if name:
             params.update({'name': name})
-        return cls._call_api(method, endpoint, params)
+        return cls._call_api(api_url, method, endpoint, params)
 
     @classmethod
-    def action(cls, username, apikey, action, number=None, name=None):
+    def action(cls, username, apikey, api_url, action, number=None, name=None):
         method = 'GET'
         endpoint = '/jarvice/action'
         params = {
@@ -103,10 +103,10 @@ class Client(object):
             params.update({'number': number})
         elif name:
             params.update({'name': name})
-        return cls._call_api(method, endpoint, params)
+        return cls._call_api(api_url, method, endpoint, params)
 
     @classmethod
-    def terminate(cls, username, apikey, number=None, name=None):
+    def terminate(cls, username, apikey, api_url, number=None, name=None):
         method = 'GET'
         endpoint = '/jarvice/terminate'
         params = {}
@@ -122,10 +122,10 @@ class Client(object):
             params.update({'number': number})
         elif name:
             params.update({'name': name})
-        return cls._call_api(method, endpoint, params)
+        return cls._call_api(api_url, method, endpoint, params)
 
     @classmethod
-    def status(cls, username, apikey, number=None, name=None):
+    def status(cls, username, apikey, api_url, number=None, name=None):
         method = 'GET'
         endpoint = '/jarvice/status'
         params = {}
@@ -141,10 +141,10 @@ class Client(object):
             params.update({'number': number})
         elif name:
             params.update({'name': name})
-        return cls._call_api(method, endpoint, params)
+        return cls._call_api(api_url, method, endpoint, params)
 
     @classmethod
-    def info(cls, username, apikey, number=None, name=None):
+    def info(cls, username, apikey, api_url, number=None, name=None):
         method = 'GET'
         endpoint = '/jarvice/info'
         params = {}
@@ -160,10 +160,10 @@ class Client(object):
             params.update({'number': number})
         elif name:
             params.update({'name': name})
-        return cls._call_api(method, endpoint, params)
+        return cls._call_api(api_url, method, endpoint, params)
 
     @classmethod
-    def submit(cls, username, apikey, job):
+    def submit(cls, username, apikey, api_url, job):
         method = 'POST'
         endpoint = '/jarvice/submit'
         params = job
@@ -176,10 +176,10 @@ class Client(object):
                     'apikey': apikey
                 }
             })
-        return cls._call_api(method, endpoint, params)
+        return cls._call_api(api_url, method, endpoint, params)
 
     @classmethod
-    def connect(cls, username, apikey, number=None, name=None):
+    def connect(cls, username, apikey, api_url, number=None, name=None):
         method = 'GET'
         endpoint = '/jarvice/connect'
         params = {
@@ -190,10 +190,10 @@ class Client(object):
             params.update({'number': number})
         elif name is not None:
             params.update({'name': name})
-        return cls._call_api(method, endpoint, params)
+        return cls._call_api(api_url, method, endpoint, params)
 
     @classmethod
-    def jobs(cls, username, apikey, name=None):
+    def jobs(cls, username, apikey, api_url, name=None):
         method = 'GET'
         endpoint = '/jarvice/jobs'
         params = {
@@ -202,10 +202,11 @@ class Client(object):
         }
         if name:
             params.update({'name': name})
-        return cls._call_api(method, endpoint, params)
+        return cls._call_api(api_url, method, endpoint, params)
 
     @classmethod
-    def output(cls, username, apikey, lines=None, number=None, name=None):
+    def output(cls, username, apikey, api_url,
+               lines=None, number=None, name=None):
         method = 'GET'
         endpoint = '/jarvice/output'
         params = {
@@ -218,10 +219,10 @@ class Client(object):
             params.update({'name': name})
         if lines:
             params.update({'lines': lines})
-        return cls._call_api(method, endpoint, params)
+        return cls._call_api(api_url, method, endpoint, params)
 
     @classmethod
-    def tail(cls, username, apikey, lines=None, number=None, name=None):
+    def tail(cls, username, apikey, api_url, lines=None, number=None, name=None):
         method = 'GET'
         endpoint = '/jarvice/tail'
         params = {
@@ -234,10 +235,10 @@ class Client(object):
             params.update({'name': name})
         if lines:
             params.update({'lines': lines})
-        return cls._call_api(method, endpoint, params)
+        return cls._call_api(api_url, method, endpoint, params)
 
     @classmethod
-    def _call_api(cls, method, endpoint, params):
+    def _call_api(cls, api_url, method, endpoint, params):
         """API Call wrapper for endpoints with application/json return types
 
         Args:
@@ -250,18 +251,20 @@ class Client(object):
         errors = None
 
         if method == 'GET':
-            result = requests.get(cls.BASE_URL + endpoint, params=params)
+            # result = requests.get(cls.BASE_URL + endpoint, params=params)
+            result = requests.get(api_url + endpoint, params=params)
         elif method == 'POST':
-            result = requests.post(cls.BASE_URL + endpoint, json=params)
+            result = requests.post(api_url + endpoint, json=params)
         else:
             raise Exception("Method %(method)s is not implemented" %
                             {'method': method})
 
+        # logging.critical('requests: %s' % result.url)
         if result is not None:
             if result.status_code >= 300:
-                logging.error("Failure to retrieve API data: %s" % (endpoint))
+                logging.error("Failure to retrieve API data: %s" % endpoint)
                 logging.error("Job payload: %s" % params)
-                logging.error("Status code: %s" % (result.status_code))
+                logging.error("Status code: %s" % result.status_code)
                 errors = {'error': {
                     'code': result.status_code,
                 }}
@@ -276,65 +279,72 @@ class Client(object):
                 errors['error'].update({'message': "Unknown content type (%s)"
                                                    % content_type})
                 logging.error("Unknown content type (%s)" % content_type)
-        return (api_result, errors)
+        return api_result, errors
 
 
 class AuthenticatedClient(object):
     """Set the credentials in the constructor and make calls
     to the Jarvice API. Even though it is a client, it is sessionless
-    since it is calling HTTP endpoints of https://api.jarvice.com
+    since it is calling HTTP endpoints of the API service:
+    https://api.jarvice.com or a supplied API service address
     """
 
-    def __init__(self, username, apikey):
+    def __init__(self, username, apikey, base_url):
         self.username = username
         self.apikey = apikey
 
+        if base_url:
+            self.api_url = base_url
+        else:
+            self.api_url = 'https://api.jarvice.com'
+        # logging.critical('in AuthClient init: %s ' % self.api_url)
+
     def connect(self, *args, **kwargs):
-        return Client.connect(self.username, self.apikey,
+        return Client.connect(self.username, self.apikey, self.api_url,
                               *args, **kwargs)
 
     def submit(self, *args, **kwargs):
-        return Client.submit(self.username, self.apikey,
+        return Client.submit(self.username, self.apikey, self.api_url,
                              *args, **kwargs)
 
     def machines(self, *args, **kwargs):
-        return Client.machines(self.username, self.apikey,
+        return Client.machines(self.username, self.apikey, self.api_url,
                                *args, **kwargs)
 
     def apps(self, *args, **kwargs):
-        return Client.apps(self.username, self.apikey,
+        return Client.apps(self.username, self.apikey, self.api_url,
                            *args, **kwargs)
 
     def info(self, *args, **kwargs):
-        return Client.info(self.username, self.apikey,
+        return Client.info(self.username, self.apikey, self.api_url,
                            *args, **kwargs)
 
     def status(self, *args, **kwargs):
-        return Client.status(self.username, self.apikey,
+        return Client.status(self.username, self.apikey, self.api_url,
                              *args, **kwargs)
 
     def action(self, *args, **kwargs):
-        return Client.action(self.username, self.apikey,
+        return Client.action(self.username, self.apikey, self.api_url,
                              *args, **kwargs)
 
     def terminate(self, *args, **kwargs):
-        return Client.terminate(self.username, self.apikey,
+        return Client.terminate(self.username, self.apikey, self.api_url,
                                 *args, **kwargs)
 
     def shutdown(self, *args, **kwargs):
-        return Client.shutdown(self.username, self.apikey,
+        return Client.shutdown(self.username, self.apikey, self.api_url,
                                *args, **kwargs)
 
     def jobs(self, *args, **kwargs):
-        return Client.jobs(self.username, self.apikey,
+        return Client.jobs(self.username, self.apikey, self.api_url,
                            *args, **kwargs)
 
     def output(self, *args, **kwargs):
-        return Client.output(self.username, self.apikey,
+        return Client.output(self.username, self.apikey, self.api_url,
                              *args, **kwargs)
 
     def tail(self, *args, **kwargs):
-        return Client.tail(self.username, self.apikey,
+        return Client.tail(self.username, self.apikey, self.api_url,
                            *args, **kwargs)
 
     def terminate_all(self, *args, **kwargs):
@@ -362,4 +372,4 @@ class AuthenticatedClient(object):
 
 if __name__ == '__main__':
     print "Jarvice API Python Client for running on-demand HPC work flows"
-    print "This client calls https://api.jarvice.com"
+    print "This client calls https://api.jarvice.com by default or named API"

@@ -234,6 +234,8 @@ def get_arguments():
     auth_group = parser.add_argument_group('auth', description='Configuration')
     auth_group.add_argument('-username', help='Jarvice username')
     auth_group.add_argument('-apikey', help='Jarvice API key')
+    auth_group.add_argument('-apiurl', help='Jarvice API URL',
+                            default='https://api.jarvice.com')
     auth_group.add_argument('-v', help='loglevel',
                             choices=['INFO', 'WARN', 'DEBUG', 'CRITICAL'],
                             dest='loglevel', default='CRITICAL')
@@ -366,7 +368,8 @@ def cli_jarvice(args, api_args, parser):
       :param parser:
     """
     _set_credentials(args)
-    client = AuthenticatedClient(config['username'], config['apikey'])
+    client = AuthenticatedClient(config['username'], config['apikey'],
+                                 args.apiurl)
 
     command = args.command
     if hasattr(client, command):
