@@ -17,7 +17,7 @@ apikey: apikey-from-portal
 # The JARVICE CLI
 
 ## Installation
-The easiest way to install is directly from PyPI.
+The easiest way to install is directly from PyPI
 
 ```pip install --user jarviceclient```
 
@@ -85,21 +85,29 @@ Launch a job from the portal and save the JSON to `job.json`. To launch it again
 ```jarvice_cli wait_for -number <jobnumber>```
 
 
-## Data Management for drop.jarvice.com Storage Vault
+## Data Management for JARVICE Storage Vault
+The default is drop.jarvice.com, for the Nimbix public cloud 
 
 ### Upload 
 
-```jarvice_cli download -drop <source> -local <destination>```
+```jarvice_cli download -drop <source> -local <destination> [-storage <vault name>]```
 
 ### Upload file or directory to drop.jarvice.com
 
 ```jarvice_cli upload -local <source> -drop <destination>```
+
+### Upload file or directory to an alternate vault
+
+```jarvice_cli upload -local <source> -drop <destination> -storage altvault.jarvice.com```
 
 ### List files on drop.jarvice.com
 
 ```jarvice_cli ls```
 or
 ```jarvice_cli ls -d <remote_dir>```
+
+### List files on an alternate vault
+```jarvice_cli ls -d <remote_dir> -storage altvault.jarvice.com```
 
 ## Querying JARVICE Options
 

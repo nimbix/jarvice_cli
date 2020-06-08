@@ -41,14 +41,15 @@ logging.basicConfig()
 try:
     import paramiko
 except ImportError:
+    paramiko = None
     sys.stderr.write("Please install paramiko. Upload and download will not "
                      "function without this dependency.")
 
 
 def _format_status(filename, current, total):
-    """Wrapper to print progress while uploading.
+    """Wrapper to print progress while uploading
     """
-    progress = 0
+
     if total > 0:
         progress = float(current) / float(total) * 100
         sys.stdout.write("\r%(filename)s %(percent)d %% "
@@ -200,7 +201,7 @@ def _put_dir(sftp, local_path, remote_path, overwrite=False):
                                'message': e.message}
                     logging.warning(message)
                     continue
-                except Exception as e:
+                except Exception:
                     logging.critical("Failure uploading %s to %s" %
                                      (full_path,
                                       os.path.join(remote_path, item)))
@@ -403,22 +404,24 @@ def download(username, apikey, vault, remote_path, local_path):
             _download_dir(sftp, remote_path, local_path)
 
 
-def wait_for(username, apikey, number=None, name=None):
+def wait_for(username, apikey, api_url, number=None, name=None):
     """Polls /jarvice/status endpoint until job completes
 
     Args:
-      username(str): Jarvice username
-      apikey(str): Jarvice API key available at platform.jarvice.com
-      number(str): Jarvice job number
-      name(str): Jarvice job name
+      :param username: Jarvice username
+      :param apikey: Jarvice API key available at platform.jarvice.com
+      :param api_url:
+      :param number: Jarvice job number
+      :param name: Jarvice job name
+
     """
     if not number and not name:
-        raise Exception("number or name is required")
+        raise Exception("job number or name is required")
 
     first_iteration = True
 
     while True:
-        result, error = JarviceAPI.Client.status(username, apikey,
+        result, error = JarviceAPI.Client.status(username, apikey, api_url,
                                                  number=number, name=name)
 
         if error:

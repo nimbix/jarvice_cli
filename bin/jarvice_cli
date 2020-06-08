@@ -355,7 +355,7 @@ def cli_wait_for(parser):
         kwargs.update({
             'number': args.number})
 
-    utils.wait_for(config['username'], config['apikey'], **kwargs)
+    utils.wait_for(config['username'], config['apikey'], args.apiurl, **kwargs)
 
 
 def cli_jarvice(args, api_args, parser):

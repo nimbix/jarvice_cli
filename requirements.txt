@@ -1,6 +1,6 @@
 ecdsa==0.15
 paramiko==2.7.1
-pycrypto==2.6.1
+pycryptodome==3.9.7
 requests==2.23.0
 simplejson==3.17.0
 argparse==1.4.0
