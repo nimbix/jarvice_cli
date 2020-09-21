@@ -38,7 +38,6 @@ class Client(object):
     inserted to the payload by passing as parameters to the
     class methods.
     """
-    # BASE_URL = 'https://api.jarvice.com'
 
     COMPLETED_STATUSES = ['completed', 'completed with error', 'terminated',
                           'canceled']
@@ -222,7 +221,8 @@ class Client(object):
         return cls._call_api(api_url, method, endpoint, params)
 
     @classmethod
-    def tail(cls, username, apikey, api_url, lines=None, number=None, name=None):
+    def tail(cls, username, apikey, api_url,
+             lines=None, number=None, name=None):
         method = 'GET'
         endpoint = '/jarvice/tail'
         params = {
@@ -246,20 +246,19 @@ class Client(object):
           endpoint(str): Jarvice endpoint, e.g., '/jarvice/jobs'
           params(dict): Python dictionary of params to pass in API call
         """
-        result = None
         api_result = {}
         errors = None
 
         if method == 'GET':
-            # result = requests.get(cls.BASE_URL + endpoint, params=params)
-            result = requests.get(api_url + endpoint, params=params)
+            result = requests.get(api_url + endpoint, verify=False,
+                                  params=params)
         elif method == 'POST':
-            result = requests.post(api_url + endpoint, json=params)
+            result = requests.post(api_url + endpoint, verify=False,
+                                   json=params)
         else:
             raise Exception("Method %(method)s is not implemented" %
                             {'method': method})
 
-        # logging.critical('requests: %s' % result.url)
         if result is not None:
             if result.status_code >= 300:
                 logging.error("Failure to retrieve API data: %s" % endpoint)
@@ -297,7 +296,6 @@ class AuthenticatedClient(object):
             self.api_url = base_url
         else:
             self.api_url = 'https://api.jarvice.com'
-        # logging.critical('in AuthClient init: %s ' % self.api_url)
 
     def connect(self, *args, **kwargs):
         return Client.connect(self.username, self.apikey, self.api_url,

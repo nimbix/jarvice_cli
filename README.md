@@ -1,5 +1,5 @@
 The Jarvice CLI by Nimbix, Inc. This consists of two components:
-  * Python API for programmatically accessing https://api.jarvice.com
+  * Python API for programmatically accessing https://api.jarvice.com or another JARVICE API service
   * jarviceclient, a command-line tool for calling the API
 
 For more information and the full API documentation, see https://api.jarvice.com.
@@ -122,4 +122,4 @@ or
 
 # JarviceAPI
 
-JarviceAPI contains a Client and AuthenticatedClient for interacting with https://api.jarvice.com
+JarviceAPI contains a Client and AuthenticatedClient for interacting with a JARVICE API, defaulting to https://api.jarvice.com
