@@ -31,6 +31,7 @@
 import requests
 import json
 import logging
+import urllib3
 
 
 class Client(object):
@@ -248,6 +249,8 @@ class Client(object):
         """
         api_result = {}
         errors = None
+
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
         if method == 'GET':
             result = requests.get(api_url + endpoint, verify=False,
