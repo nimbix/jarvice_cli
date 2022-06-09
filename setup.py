@@ -33,8 +33,8 @@ from setuptools import setup, find_packages
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-setup(name='jarviceclient',
-      description='Jarvice API Python Client for Nimbix, Inc.',
+setup(name='jarviceclient3',
+      description='Jarvice API Python 3 Client for Nimbix, Inc.',
       long_description=long_description,
       long_description_content_type="text/markdown",
       maintainer='Nimbix',
