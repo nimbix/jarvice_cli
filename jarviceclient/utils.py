@@ -1,6 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
-# Copyright (c) 2020, Nimbix, Inc.
+# Copyright (c) 2022, Nimbix, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -427,7 +427,7 @@ def wait_for(username, apikey, api_url, number=None, name=None):
         if error:
             raise Exception("Could not query job status %s" % error)
         else:
-            status = result.get(result.keys()[0])['job_status']
+            status = result.get(list(result.keys())[0])['job_status']
             if status.lower() not in JarviceAPI.Client.COMPLETED_STATUSES:
                 sys.stdout.write('.')
                 sys.stdout.flush()

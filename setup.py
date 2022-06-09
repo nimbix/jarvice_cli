@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2020, Nimbix, Inc.
+# Copyright (c) 2022, Nimbix, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@ setup(name='jarviceclient',
       long_description_content_type="text/markdown",
       maintainer='Nimbix',
       maintainer_email='support@nimbix.net',
-      version='1.0.3',
+      version='1.0.6',
       url='http://www.nimbix.net',
       packages=find_packages(),
       py_modules=['jarviceclient',

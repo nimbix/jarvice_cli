@@ -1,6 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
-# Copyright (c) 2020, Nimbix, Inc.
+# Copyright (c) 2022, Nimbix, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -351,7 +351,7 @@ class AuthenticatedClient(object):
         jobs, error = self.jobs(*args, **kwargs)
         killed = []
         errors = []
-        for job_number, job in jobs.iteritems():
+        for job_number, job in jobs.items():
             result, error = self.terminate(number=job_number)
             if error:
                 errors.append({'number': error})
@@ -362,7 +362,7 @@ class AuthenticatedClient(object):
         jobs, errors = self.jobs(*args, **kwargs)
         killed = []
         errors = []
-        for job_number, job in jobs.iteritems():
+        for job_number, job in jobs.items():
             result, error = self.shutdown(number=job_number)
             if error:
                 errors.append({'number': error})
@@ -371,5 +371,5 @@ class AuthenticatedClient(object):
 
 
 if __name__ == '__main__':
-    print "Jarvice API Python Client for running on-demand HPC work flows"
-    print "This client calls https://api.jarvice.com by default or named API"
+    print("Jarvice API Python Client for running on-demand HPC work flows")
+    print("This client calls https://api.jarvice.com by default or named API")
