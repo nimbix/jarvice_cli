@@ -33,7 +33,7 @@ import sys
 import pprint
 import os
 import time
-import ConfigParser
+import configparser
 import simplejson as json
 from collections import OrderedDict
 
@@ -94,7 +94,7 @@ def cli_summary(parser, client):
     summary = []
     summary_errors = []
     if not errors:
-        for job_number, detail in result.iteritems():
+        for job_number, detail in result.items():
             item = OrderedDict()
             item['job_number'] = job_number
             item['job_name'] = detail['job_name']
@@ -143,7 +143,7 @@ def cli_ls(parser):
     result = utils.ls(config['username'], config['apikey'],
                       args.store, args.directory)
     for i in result:
-        print i
+        print(i)
 
 
 def cli_download(parser):
@@ -264,7 +264,7 @@ def _set_credentials(args):
         config.update({'username': args.username})
         config.update({'apikey': args.apikey})
     elif os.path.exists(os.path.expanduser('~/.jarvice.cfg')):
-        CParser = ConfigParser.ConfigParser()
+        CParser = configparser.ConfigParser()
         CParser.read([os.path.expanduser('~/.jarvice.cfg'), ])
         config.update({'username': CParser.get('auth', 'username')})
         config.update({'apikey': CParser.get('auth', 'apikey')})
@@ -304,18 +304,18 @@ def _call_jarvice_api(parser, command, method, *args, **kwargs):
     if args.command not in ['jobs', 'submit', 'shutdown_all', 'terminate_all',
                             'apps', 'machines']:
         if not args.name and not args.number:
-            print "Argument Error: -name or -number is required"
+            print("Argument Error: -name or -number is required")
             subparser.print_help()
             sys.exit(1)
         elif args.name and args.number:
-            print "Argument Error: Only one of -name and -number can be input"
+            print("Argument Error: Only one of -name and -number can be input")
             subparser.print_help()
             sys.exit(1)
 
     args_dict = vars(args)
     proxy_args = ['name', 'number', 'lines', 'action', 'job']
     api_kwargs = dict()
-    for key, value in args_dict.iteritems():
+    for key, value in args_dict.items():
         if key in proxy_args and value is not None:
             api_kwargs.update({key: value})
     return method(**api_kwargs)
@@ -337,11 +337,11 @@ def cli_wait_for(parser):
     args = subparser.parse_args()
 
     if not args.name and not args.number:
-        print "Argument Error: -name or -number is required"
+        print("Argument Error: -name or -number is required")
         subparser.print_help()
         sys.exit(1)
     elif args.name and args.number:
-        print "Argument Error: Only one of -name and -number can be input"
+        print("Argument Error: Only one of -name and -number can be input")
         subparser.print_help()
         sys.exit(1)
 
@@ -378,7 +378,7 @@ def cli_jarvice(args, api_args, parser):
         if errors:
             print_output(errors)
         if command in ['tail', 'output']:
-            print result
+            print(result)
         else:
             print_output(result)
     elif command == 'download':
@@ -400,12 +400,12 @@ def cli_jarvice(args, api_args, parser):
     elif command == 'wait_for':
         cli_wait_for(parser)
     else:
-        print 'Cannot find command %s' % command
+        print('Cannot find command %s' % command)
 
 
 def print_output(result):
     if isinstance(result, dict) or isinstance(result, list):
-        print json.dumps(result, indent=4)
+        print(json.dumps(result, indent=4))
     else:
         pprint.pprint(result, indent=4)
 
